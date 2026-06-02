@@ -27,25 +27,22 @@ public class ClientService {
                 int opcao = scanner.nextInt();
                 scanner.nextLine();
 
-                switch (opcao) {
+                 switch (opcao) {
 
                     case 1:
                         listarArquivos(socket, servidor);
                         break;
 
                     case 2:
-                        System.out.println("Upload ainda será implementado.");
+                        enviarArquivo(socket, servidor, scanner);
                         break;
 
                     case 3:
-                        System.out.println("Download ainda será implementado.");
+                        baixarArquivo(socket, servidor, scanner);
                         break;
 
                     case 4:
                         return;
-
-                    default:
-                        System.out.println("Opção inválida.");
                 }
             }
 
