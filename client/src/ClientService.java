@@ -1,5 +1,10 @@
+package src;
+
 import java.net.*;
 import java.util.Scanner;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class ClientService {
 
@@ -81,5 +86,82 @@ public class ClientService {
 
         System.out.println("\nArquivos disponíveis:");
         System.out.println(lista);
+    }
+
+    private void enviarArquivo(
+            DatagramSocket socket,
+            InetAddress servidor,
+            Scanner scanner) throws Exception {
+
+        System.out.print("Caminho do arquivo: ");
+        String caminho = scanner.nextLine();
+
+        File arquivo = new File(caminho);
+
+        if (!arquivo.exists()) {
+            System.out.println("Arquivo não encontrado.");
+            return;
+        }
+
+        String comando =
+                "UPLOAD:" + arquivo.getName();
+
+        socket.send(
+                new DatagramPacket(
+                        comando.getBytes(),
+                        comando.length(),
+                        servidor,
+                        PORTA));
+
+        Thread.sleep(500);
+
+        byte[] dados =
+                Files.readAllBytes(
+                        arquivo.toPath());
+
+        Protocol.enviarBytes(
+                socket,
+                servidor,
+                PORTA,
+                dados);
+
+        System.out.println(
+                "Upload concluído.");
+    }
+
+    private void baixarArquivo(
+            DatagramSocket socket,
+            InetAddress servidor,
+            Scanner scanner) throws Exception {
+
+        System.out.print(
+                "Nome do arquivo: ");
+
+        String nomeArquivo =
+                scanner.nextLine();
+
+        String comando =
+                "DOWNLOAD:" + nomeArquivo;
+
+        socket.send(
+                new DatagramPacket(
+                        comando.getBytes(),
+                        comando.length(),
+                        servidor,
+                        PORTA));
+
+        byte[] dados =
+                Protocol.receberBytes(
+                        socket,
+                        servidor,
+                        PORTA);
+
+        Files.write(
+                Paths.get(
+                        "download_" + nomeArquivo),
+                dados);
+
+        System.out.println(
+                "Download concluído.");
     }
 }
