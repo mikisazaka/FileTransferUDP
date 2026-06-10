@@ -23,7 +23,7 @@ public class ServerMain {
                 System.out.println("Nova requisição recebida de: "
                         + pacoteRecebido.getAddress() + ":" + pacoteRecebido.getPort());
 
-                ClientHandler handler = new ClientHandler(pacoteRecebido);
+                ClientHandler handler = new ClientHandler(pacoteRecebido, serverSocket);
                 Thread threadCliente = new Thread(handler);
                 threadCliente.start();
             }
