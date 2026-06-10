@@ -10,28 +10,30 @@ public class ClientHandler implements Runnable {
     private InetAddress clienteIp;
     private int clientePorta;
     private static final String DIRETORIO_ARQUIVOS = "server/arquivos_recebidos/";
+    private DatagramSocket socketServidor;
 
-    public ClientHandler(DatagramPacket pacoteInicial) {
+    public ClientHandler(DatagramPacket pacoteInicial, DatagramSocket socketServidor) {
         this.pacoteInicial = pacoteInicial;
+        this.socketServidor = socketServidor;
         this.clienteIp = pacoteInicial.getAddress();
         this.clientePorta = pacoteInicial.getPort();
     }
 
     @Override
     public void run() {
-        try (DatagramSocket socketDedicado = new DatagramSocket()) {
+        try {
 
             String requisicao = new String(pacoteInicial.getData(), 0, pacoteInicial.getLength()).trim();
             System.out.println("[THREAD " + Thread.currentThread().getId() + "] Comando recebido: " + requisicao);
 
             if (requisicao.equalsIgnoreCase("LISTAR")) {
-                enviarListaArquivos(socketDedicado);
+                enviarListaArquivos(socketServidor);
             } else if (requisicao.startsWith("UPLOAD")) {
                 String nomeArquivo = requisicao.split(":", 2)[1].trim();
-                receberArquivo(socketDedicado, nomeArquivo);
+                receberArquivo(nomeArquivo);
             } else if (requisicao.startsWith("DOWNLOAD")) {
                 String nomeArquivo = requisicao.split(":", 2)[1].trim();
-                enviarArquivo(socketDedicado, nomeArquivo);
+                enviarArquivo(nomeArquivo);
             } else {
                 System.out.println("Comando desconhecido.");
             }
@@ -63,11 +65,14 @@ public class ClientHandler implements Runnable {
                 + "] Lista de arquivos enviada ao cliente.");
     }
 
-    private void receberArquivo(DatagramSocket socket, String nomeArquivo) {
+    private void receberArquivo(String nomeArquivo) {
         System.out.println("[THREAD " + Thread.currentThread().getId()
                 + "] Iniciando recebimento do arquivo: " + nomeArquivo);
         try {
-            byte[] dadosCompletos = Protocol.receberBytes(socket, clienteIp, clientePorta);
+            DatagramSocket socketTransferencia = new DatagramSocket();
+            enviarPortaTransferencia(socketTransferencia.getLocalPort());
+            byte[] dadosCompletos = Protocol.receberBytes(socketTransferencia, clienteIp, clientePorta);
+            socketTransferencia.close();
             FileManager.salvarArquivo(nomeArquivo, dadosCompletos);
 
             System.out.println("[THREAD " + Thread.currentThread().getId()
@@ -79,7 +84,7 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void enviarArquivo(DatagramSocket socket, String nomeArquivo) {
+    private void enviarArquivo(String nomeArquivo) {
         System.out.println("[THREAD " + Thread.currentThread().getId()
                 + "] Iniciando envio do arquivo: " + nomeArquivo);
 
@@ -90,8 +95,11 @@ public class ClientHandler implements Runnable {
         }
 
         try {
+            DatagramSocket socketTransferencia = new DatagramSocket();
+            enviarPortaTransferencia(socketTransferencia.getLocalPort());
             byte[] dados = FileManager.lerArquivo(nomeArquivo);
-            Protocol.enviarBytes(socket, clienteIp, clientePorta, dados);
+            Protocol.enviarBytes(socketTransferencia, clienteIp, clientePorta, dados);
+            socketTransferencia.close();
 
             System.out.println("[THREAD " + Thread.currentThread().getId()
                     + "] Download de '" + nomeArquivo + "' finalizado.");
@@ -100,5 +108,10 @@ public class ClientHandler implements Runnable {
             System.err.println("[THREAD " + Thread.currentThread().getId()
                     + "] Erro ao ler/enviar arquivo '" + nomeArquivo + "': " + e.getMessage());
         }
+    }
+    private void enviarPortaTransferencia(int porta) throws IOException {
+        String msg = "PORTA:" + porta;
+        byte[] dados = msg.getBytes();
+        socketServidor.send(new DatagramPacket(dados, dados.length, clienteIp, clientePorta));
     }
 }

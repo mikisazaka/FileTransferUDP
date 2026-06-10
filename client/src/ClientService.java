@@ -113,7 +113,12 @@ public class ClientService {
                         servidor,
                         PORTA));
 
-        Thread.sleep(500);
+        byte[] buffer = new byte[128];
+        DatagramPacket resposta = new DatagramPacket(buffer, buffer.length);
+        socket.receive(resposta);
+
+        int portaTransferencia = Integer.parseInt(
+                new String(resposta.getData(),0,resposta.getLength()).replace("PORTA:","").trim());
 
         byte[] dados =
                 Files.readAllBytes(
@@ -122,7 +127,7 @@ public class ClientService {
         Protocol.enviarBytes(
                 socket,
                 servidor,
-                PORTA,
+                portaTransferencia,
                 dados);
 
         System.out.println(
@@ -150,11 +155,18 @@ public class ClientService {
                         servidor,
                         PORTA));
 
+        byte[] buffer = new byte[128];
+        DatagramPacket resposta = new DatagramPacket(buffer, buffer.length);
+        socket.receive(resposta);
+
+        int portaTransferencia = Integer.parseInt(
+                new String(resposta.getData(),0,resposta.getLength()).replace("PORTA:","").trim());
+
         byte[] dados =
                 Protocol.receberBytes(
                         socket,
                         servidor,
-                        PORTA);
+                        portaTransferencia);
 
         Files.write(
                 Paths.get(
