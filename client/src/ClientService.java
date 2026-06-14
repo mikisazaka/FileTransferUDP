@@ -29,6 +29,11 @@ public class ClientService {
                 System.out.println("4 - Sair");
                 System.out.print("Escolha: ");
 
+                // Evita quebra do loop caso o usuario digite letras ou caracteres invalidos
+                if (!scanner.hasNextInt()) {
+                    scanner.nextLine();
+                    continue;
+                }
                 int opcao = scanner.nextInt();
                 scanner.nextLine();
 
@@ -52,6 +57,7 @@ public class ClientService {
             }
 
         } catch (Exception e) {
+            System.out.println("Erro inesperado na execucao do cliente.");
             e.printStackTrace();
         }
     }
@@ -99,7 +105,7 @@ public class ClientService {
         File arquivo = new File(caminho);
 
         if (!arquivo.exists()) {
-            System.out.println("Arquivo não encontrado.");
+            System.out.println("Arquivo não encontrado, verifique o nome do arquivo.");
             return;
         }
 
@@ -139,14 +145,10 @@ public class ClientService {
             InetAddress servidor,
             Scanner scanner) throws Exception {
 
-        System.out.print(
-                "Nome do arquivo: ");
+        System.out.print("Nome do arquivo: ");
+        String nomeArquivo = scanner.nextLine();
 
-        String nomeArquivo =
-                scanner.nextLine();
-
-        String comando =
-                "DOWNLOAD:" + nomeArquivo;
+        String comando = "DOWNLOAD:" + nomeArquivo;
 
         socket.send(
                 new DatagramPacket(
@@ -155,12 +157,20 @@ public class ClientService {
                         servidor,
                         PORTA));
 
-        byte[] buffer = new byte[128];
+        // Buffer de 512 bytes para garantir a leitura de mensagens de erro textuais do servidor
+        byte[] buffer = new byte[512]; 
         DatagramPacket resposta = new DatagramPacket(buffer, buffer.length);
         socket.receive(resposta);
 
-        int portaTransferencia = Integer.parseInt(
-                new String(resposta.getData(),0,resposta.getLength()).replace("PORTA:","").trim());
+        String conteudoResposta = new String(resposta.getData(), 0, resposta.getLength()).trim();
+
+        // Trata arquivos inexistentes no servidor impedindo que a string de erro quebre o parseInt
+        if (!conteudoResposta.startsWith("PORTA:")) {
+            System.out.println("Arquivo não encontrado, verifique o nome do arquivo.");
+            return; 
+        }
+
+        int portaTransferencia = Integer.parseInt(conteudoResposta.replace("PORTA:", "").trim());
 
         byte[] dados =
                 Protocol.receberBytes(
@@ -169,11 +179,9 @@ public class ClientService {
                         portaTransferencia);
 
         Files.write(
-                Paths.get(
-                        "download_" + nomeArquivo),
+                Paths.get("download_" + nomeArquivo),
                 dados);
 
-        System.out.println(
-                "Download concluído.");
+        System.out.println("Download concluído.");
     }
 }
