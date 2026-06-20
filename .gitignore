@@ -1,0 +1,9 @@
+# Configurações do IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Pastas de compilação
+out/
+target/
