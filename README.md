@@ -5,7 +5,23 @@ O servidor aceita múltiplos clientes simultâneos e suporta três operações: 
 
 ## Como executar
 
-### 1. Iniciar o servidor
+### 1. Compilar o servidor
+
+```bash
+mkdir -p out/server
+javac -d out/server server/src/*.java
+```
+
+### 2. Compilar o cliente
+
+O cliente usa a classe `Protocol`, que está dentro de `server/src/`, então ela precisa ser incluída na compilação do cliente:
+
+```bash
+mkdir -p out/client
+javac -d out/client client/src/ClientMain.java client/src/ClientService.java server/src/Protocol.java
+```
+
+### 3. Iniciar o servidor
 
 Execute a partir da **raiz do projeto** (importante: o servidor salva os arquivos em `server/arquivos_recebidos/`, um caminho relativo):
 
@@ -21,7 +37,7 @@ Servidor pronto e aguardando requisições...
 
 Deixe esse terminal aberto — o servidor ficará escutando indefinidamente.
 
-### 2. Iniciar o cliente
+### 4. Iniciar o cliente
 
 Em **outro terminal** (pode ser na mesma máquina ou em outra, desde que a rede permita UDP na porta 9876), também a partir da raiz do projeto:
 
