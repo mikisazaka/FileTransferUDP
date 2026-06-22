@@ -4,11 +4,11 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-ppublic class ClientService {
+public class ClientService {
 
     // Define o endereço do servidor (neste caso, a própria máquina local)
     private static final String HOST = "localhost";
-    
+
     // Define a porta padrão onde o servidor principal está escutando as requisições
     private static final int PORTA = 9876;
 
